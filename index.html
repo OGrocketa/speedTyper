@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SpeedTyper</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+        <div id="start">
+            <h1>Speed typer</h1>
+            <div id="data">
+                <p>WPM: <span id="wpmCounter">15</span> s</p>
+                <p>Time Left: <span id="countdown">60</span> s</p>
+                <p>Mistakes: <span id="mistakesCounter">0</span> </p>
+            </div>
+            <textarea id="inputArea" placeholder="Press space to start the test" ></textarea>
+        </div>
+        <div id="result">
+            <h2>Test Results:</h2>
+            <p>WPM: <span id="finalWPM">0</span></p>
+            <p>Mistakes: <span id="finalMistakes">0</span></p>
+            <p>Accuracy: <span id="finalAccuracy">0%</span></p>
+            <button>Restart Test</button>
+        </div>
+    
+    <script src="index.js"></script>
+</body>
+</html>
