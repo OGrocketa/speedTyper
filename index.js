@@ -69,52 +69,60 @@ class SpeedTyper {
     }
 
     #quoteToHTML(quote) {
-        return quote.split('').map(char => {
-            if (char === ' ') {
-                return `<span class="letter space">&nbsp;</span>`;
-            } else if (char === ',') {
-                return `<span class="letter comma">,</span>`;
-            }
-            return `<span class="letter">${char}</span>`;
-        }).join('');
+        return quote.split(' ').map(word => {
+            return `<span class="word">${word.split('').map(char => `<span class="letter">${char}</span>`).join('')}</span>`;
+        }).join(' ');
     }
-
-    #checkInput() {
-        const input = this.inputArea.value;
-        const quoteChars = this.generatedTextElement.querySelectorAll('.letter');
-        
-        quoteChars.forEach((charSpan, index) => {
-            if (index < input.length && index < quoteChars.length) {  // Ensure no overflow
-                const typedChar = input[index];
     
-                // Special handling for spaces
-                if (charSpan.textContent === '\u00A0') {  // Unicode for non-breaking space
-                    if (typedChar === ' ') {
+    #checkInput() {
+        const input = this.inputArea.value.trim();
+        const words = input.split(' '); // Get typed words
+        const wordSpans = this.generatedTextElement.querySelectorAll('.word'); // Get words in the quote
+    
+        // Check each word
+        wordSpans.forEach((wordSpan, wordIndex) => {
+            const charSpans = wordSpan.querySelectorAll('.letter');
+            
+            //Only check words which user typed
+            if (wordIndex < words.length) {
+                const typedWord = words[wordIndex];
+                const wordText = Array.from(charSpans).map(charSpan => charSpan.textContent).join('');
+                
+                if (typedWord === wordText) {
+                    // If the word is correct, mark all characters in the word as correct
+                    charSpans.forEach(charSpan => {
                         charSpan.classList.add('correct');
-                        charSpan.classList.remove('incorrect', 'mistake-counted');
-                    } else if (!charSpan.classList.contains('mistake-counted')) {
-                        this.#mistakes++;
-                        this.mistakesStat.textContent = this.#mistakes;
-                        charSpan.classList.add('incorrect', 'mistake-counted');
-                        charSpan.classList.remove('correct');
-                    }
+                        charSpan.classList.remove('incorrect');
+                    });
                 } else {
-                    // Handle regular characters
-                    if (typedChar === charSpan.textContent) {
-                        charSpan.classList.add('correct');
-                        charSpan.classList.remove('incorrect', 'mistake-counted');
-                    } else if (!charSpan.classList.contains('mistake-counted')) {
-                        this.#mistakes++;
-                        this.mistakesStat.textContent = this.#mistakes;
-                        charSpan.classList.add('incorrect', 'mistake-counted');
-                        charSpan.classList.remove('correct');
-                    }
+                    // If the word is incorrect, force correction and prevent moving forward
+                    charSpans.forEach((charSpan, charIndex) => {
+                        if (charIndex < typedWord.length) {
+                            const typedChar = typedWord[charIndex];
+                            if (typedChar === charSpan.textContent) {
+                                charSpan.classList.add('correct');
+                                charSpan.classList.remove('incorrect');
+                            } else {
+                                charSpan.classList.add('incorrect');
+                                charSpan.classList.remove('correct');
+                            }
+                        } else {
+                            charSpan.classList.remove('correct', 'incorrect');
+                        }
+                    });
                 }
             } else {
-                charSpan.classList.remove('correct', 'incorrect', 'mistake-counted');
+                // Ensure the following words are not marked as anything (if not typed yet)
+                charSpans.forEach(charSpan => charSpan.classList.remove('correct', 'incorrect'));
             }
         });
+        
+        // Only allow typing up to the current word
+        if (words.length > wordSpans.length || words[words.length - 1] !== Array.from(wordSpans[words.length - 1].querySelectorAll('.letter')).map(char => char.textContent).join('')) {
+            this.inputArea.value = words.slice(0, wordSpans.length).join(' ');  // Restrict further typing until current word is correct
+        }
     }
+    
     
     
 
