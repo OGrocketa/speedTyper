@@ -1,5 +1,5 @@
 class SpeedTyper {
-    #timeLeft = 2;         
+    #timeLeft = 60;         
     #countDownActive = false; 
     #countdown;
     #apiUrl = 'https://api.api-ninjas.com/v1/quotes';      
@@ -10,13 +10,14 @@ class SpeedTyper {
         this.countDownElement = countDownElement; 
         this.resultElement = resultElement;
         this.generatedTextElement = generatedTextElement;
-
+        this.currentQuote = '';
 
         this.#setupEventListeners();
     }
 
     #setupEventListeners() {
         document.addEventListener('keydown', (e) => this.#handleKeydown(e));
+        this.inputArea.addEventListener('input', () => this.#checkInput());
     }
 
     #handleKeydown(e) {
@@ -56,23 +57,46 @@ class SpeedTyper {
             });
             const data = await response.json();
             let quote = data[0].quote;
-            this.generatedTextElement.textContent = quote;
+            this.generatedTextElement.innerHTML = this.#quoteToHTML(this.currentQuote); 
         }catch(error){
             console.log(error);
             this.generatedTextElement.textContent = 'Failed to fetch quote.';
         }
     }
 
+    #quoteToHTML(quote){
+        return quote.split('').map(char => `<span class = "letter">${char}</span>`).join('');
+    }
+
+    #checkInput(){
+        const input = this.inputArea.value;
+        const quoteChars = this.generatedTextElement.querySelectorAll('.letter');
+
+        quoteChars.forEach((charSpan, index) => {
+            if (index < input.length) {
+                const typedChar = input[index];
+                if (typedChar === charSpan.textContent) {
+                    charSpan.classList.add('correct');
+                    charSpan.classList.remove('incorrect');
+                } else {
+                    charSpan.classList.add('incorrect');
+                    charSpan.classList.remove('correct');
+                }
+            } else {
+                charSpan.classList.remove('correct', 'incorrect');
+            }
+        });
+    }
 
     restartTest() {
         clearInterval(this.#countdown);
-        this.#timeLeft = 2;
+        this.#timeLeft = 60;
         this.countDownElement.textContent = this.#timeLeft;
         this.inputArea.disabled = true;
         this.inputArea.value = "";
         this.#countDownActive = false;
         this.resultElement.style.display = "none";
-        this.generatedTextElement.textContent = "";
+        this.generatedTextElement.innerHTML = "";
     }
 }
 

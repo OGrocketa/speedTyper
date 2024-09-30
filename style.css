@@ -118,7 +118,15 @@ html,body {
 
 
 .letter {
-    font-size: 1.5em; /* Adjust font size */
-    display: inline-block; /* So colors can be applied individually */
-    transition: color 0.3s; /* Smooth transition effect */
+    font-size: 1.5em; 
+    display: inline-block; 
+    transition: color 0.3s;
+}
+
+.correct {
+    color: green;
+}
+
+.incorrect {
+    color: red;
 }
