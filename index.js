@@ -3,7 +3,7 @@ class SpeedTyper {
     #countDownActive = false; 
     #countdown;
     #apiUrl = 'https://api.api-ninjas.com/v1/quotes';      
-    #api = "2Ty/vxve41sfRybB+5/brA==rJZticdIoq9PZ4in";
+    #api = "";
     #mistakes = 0;   
     
     constructor(inputArea, countDownElement, resultElement,generatedTextElement,mistakesStat) {
