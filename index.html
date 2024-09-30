@@ -10,12 +10,16 @@
         <div id="start">
             <h1>Speed typer</h1>
             <div id="data">
-                <p>WPM: <span id="wpmCounter">15</span> s</p>
+                <p>WPM: <span id="wpmCounter">15</span> </p>
                 <p>Time Left: <span id="countdown">60</span> s</p>
                 <p>Mistakes: <span id="mistakesCounter">0</span> </p>
             </div>
-            <textarea id="inputArea" placeholder="Press space to start the test" ></textarea>
+            <div id="textAndInput">
+                <p id="generatedText"></p>
+                <textarea id="inputArea" placeholder="Press space to start the test" disabled></textarea>
+             </div>
         </div>
+            
         <div id="result">
             <h2>Test Results:</h2>
             <p>WPM: <span id="finalWPM">0</span></p>

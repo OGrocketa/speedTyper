@@ -1,12 +1,16 @@
 class SpeedTyper {
     #timeLeft = 2;         
     #countDownActive = false; 
-    #countdown;             
+    #countdown;
+    #apiUrl = 'https://api.api-ninjas.com/v1/quotes';      
+    #api = "2Ty/vxve41sfRybB+5/brA==rJZticdIoq9PZ4in";      
     
-    constructor(inputArea, countDownElement, resultElement) {
+    constructor(inputArea, countDownElement, resultElement,generatedTextElement) {
         this.inputArea = inputArea;       
         this.countDownElement = countDownElement; 
         this.resultElement = resultElement;
+        this.generatedTextElement = generatedTextElement;
+
 
         this.#setupEventListeners();
     }
@@ -18,8 +22,11 @@ class SpeedTyper {
     #handleKeydown(e) {
         if (e.code === 'Space' && !this.#countDownActive) {
             e.preventDefault();
+            this.getQuote();
             this.#countDownActive = true;
             this.#startCountdown();
+            this.inputArea.disabled  = false;
+            this.inputArea.focus();
         }
     }
 
@@ -40,15 +47,32 @@ class SpeedTyper {
         this.resultElement.style.display = "block";
     }
 
+    async getQuote() {
+        try{
+            const response = await fetch(this.#apiUrl,{
+                headers:{
+                    'X-Api-Key':this.#api
+                }
+            });
+            const data = await response.json();
+            let quote = data[0].quote;
+            this.generatedTextElement.textContent = quote;
+        }catch(error){
+            console.log(error);
+            this.generatedTextElement.textContent = 'Failed to fetch quote.';
+        }
+    }
+
 
     restartTest() {
         clearInterval(this.#countdown);
         this.#timeLeft = 2;
         this.countDownElement.textContent = this.#timeLeft;
-        this.inputArea.disabled = false;
+        this.inputArea.disabled = true;
         this.inputArea.value = "";
         this.#countDownActive = false;
         this.resultElement.style.display = "none";
+        this.generatedTextElement.textContent = "";
     }
 }
 
@@ -57,8 +81,10 @@ window.onload = function() {
     const inputArea = document.getElementById("inputArea");
     const countDownElement = document.getElementById("countdown");
     const resultElement = document.getElementById("result");
+    const generatedTextElement = document.getElementById("generatedText");
 
-    const speedTyper = new SpeedTyper(inputArea, countDownElement, resultElement);
+    const speedTyper = new SpeedTyper(inputArea, countDownElement, resultElement, generatedTextElement);
 
     document.querySelector("button").addEventListener("click", () => speedTyper.restartTest());
 };
+

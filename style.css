@@ -10,6 +10,25 @@ body {
     margin: 0;
 }
 
+#textAndInput {
+    display: block;
+    border: 2px solid #55575e; 
+    border-radius: 10px; 
+    background-color: #f8f9fa; 
+    padding: 20px; 
+    width: 90%; 
+    max-width: 700px; 
+    margin: 20px auto; 
+    box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1); 
+}
+
+#generatedText {
+    font-size: 1.8em; 
+    color: #333; 
+    margin-bottom: 20px;
+    text-align: left; 
+    font-weight: bold;
+}
 
 #start {
     text-align: center;
@@ -38,7 +57,7 @@ textarea {
     padding: 10px;    
     width: 80%;
     max-width: 600px;
-    height: 150px;
+    height: 50px;
     border: 2px solid #ccc;
     margin-top: 20px;
     resize: none;
@@ -98,3 +117,8 @@ html,body {
 }
 
 
+.letter {
+    font-size: 1.5em; /* Adjust font size */
+    display: inline-block; /* So colors can be applied individually */
+    transition: color 0.3s; /* Smooth transition effect */
+}
