@@ -1,25 +1,53 @@
 class SpeedTyper {
-    #timeLeft = 15;         
+    #timeLeft = 120;         
     #countDownActive = false; 
     #countdown;
     #apiUrl = 'https://api.api-ninjas.com/v1/quotes';      
     #api = "";
     #mistakes = 0;   
+    #startTime = null;
+    #wpmCounter = 0;
+    #wpmInterval;
+    #correctChars = 0;
+    #totalCharsTyped = 0;
+    #accuracy = 0;
+
     
-    constructor(inputArea, countDownElement, resultElement,generatedTextElement,mistakesStat) {
+    constructor(inputArea, countDownElement, resultElement,generatedTextElement,mistakesStat,wpmElement) {
         this.inputArea = inputArea;       
         this.countDownElement = countDownElement; 
         this.resultElement = resultElement;
         this.generatedTextElement = generatedTextElement;
         this.quote = '';
         this.mistakesStat = mistakesStat;
+        this.wpmElement = wpmElement; 
 
         this.#setupEventListeners();
     }
 
     #setupEventListeners() {
         document.addEventListener('keydown', (e) => this.#handleKeydown(e));
-        this.inputArea.addEventListener('input', () => this.#checkInput());
+        this.inputArea.addEventListener('input', () => {
+            this.#checkInput();
+        });
+    }
+
+    #startWPMInterval() {
+        this.#wpmInterval = setInterval(() => {
+            this.#updateWPM();
+        }, 5000);  // WPM updates every 5 seconds
+    }
+
+    #updateWPM(){
+        const now = new Date();
+        const elapsedTime = (now - this.#startTime)/1000;
+
+        const typedWords = this.inputArea.value.trim().split(/\s+/).filter(word => word.length > 0).length;
+        const wpm = Math.floor((typedWords / elapsedTime) * 60);
+
+        if(elapsedTime > 0) this.wpmElement.textContent = wpm;
+        this.#wpmCounter = wpm;
+
     }
 
     #handleKeydown(e) {
@@ -30,6 +58,8 @@ class SpeedTyper {
             this.#startCountdown();
             this.inputArea.disabled  = false;
             this.inputArea.focus();
+            this.#startTime = new Date();
+            this.#startWPMInterval();
         }
     }
 
@@ -38,7 +68,9 @@ class SpeedTyper {
             if (this.#timeLeft < 0) {
                 clearInterval(this.#countdown);
                 this.inputArea.disabled = true;
+                this.#updateWPM();
                 this.#displayResult();
+                clearInterval(this.#wpmInterval);  
             } else {
                 this.countDownElement.textContent = this.#timeLeft;
                 this.#timeLeft--;
@@ -50,6 +82,9 @@ class SpeedTyper {
         this.resultElement.style.display = "block";
         const mistakesRes = document.getElementById("finalMistakes");
         mistakesRes.textContent = this.#mistakes;
+        const wpmRes = document.getElementById("finalWPM");
+        wpmRes.textContent = this.#wpmCounter;
+        this.#updateAccuracy();
     }
 
     async getQuote() {
@@ -75,60 +110,119 @@ class SpeedTyper {
     }
     
     #checkInput() {
-        const input = this.inputArea.value.trim();
-        const words = input.split(' '); // Get typed words
-        const wordSpans = this.generatedTextElement.querySelectorAll('.word'); // Get words in the quote
-    
-        // Check each word
-        wordSpans.forEach((wordSpan, wordIndex) => {
-            const charSpans = wordSpan.querySelectorAll('.letter');
-            
-            //Only check words which user typed
-            if (wordIndex < words.length) {
-                const typedWord = words[wordIndex];
-                const wordText = Array.from(charSpans).map(charSpan => charSpan.textContent).join('');
-                
-                if (typedWord === wordText) {
-                    // If the word is correct, mark all characters in the word as correct
-                    charSpans.forEach(charSpan => {
-                        charSpan.classList.add('correct');
-                        charSpan.classList.remove('incorrect');
-                    });
-                } else {
-                    // If the word is incorrect, force correction and prevent moving forward
-                    charSpans.forEach((charSpan, charIndex) => {
-                        if (charIndex < typedWord.length) {
-                            const typedChar = typedWord[charIndex];
-                            if (typedChar === charSpan.textContent) {
-                                charSpan.classList.add('correct');
-                                charSpan.classList.remove('incorrect');
-                            } else {
-                                charSpan.classList.add('incorrect');
-                                charSpan.classList.remove('correct');
-                            }
-                        } else {
-                            charSpan.classList.remove('correct', 'incorrect');
-                        }
-                    });
-                }
-            } else {
-                // Ensure the following words are not marked as anything (if not typed yet)
-                charSpans.forEach(charSpan => charSpan.classList.remove('correct', 'incorrect'));
-            }
-        });
+    const input = this.inputArea.value.trim();
+    const words = input.split(' '); // Get typed words
+    const wordSpans = this.generatedTextElement.querySelectorAll('.word'); // Get words in the quote
+
+    this.#correctChars = 0; 
+    this.#totalCharsTyped = input.replace(/\s+/g, '').length;
+    let quoteComplete = true; // Flag to check if the entire quote is typed
+
+    // Check each word
+    wordSpans.forEach((wordSpan, wordIndex) => {
+        const charSpans = wordSpan.querySelectorAll('.letter');
         
-        // Only allow typing up to the current word
-        if (words.length > wordSpans.length || words[words.length - 1] !== Array.from(wordSpans[words.length - 1].querySelectorAll('.letter')).map(char => char.textContent).join('')) {
-            this.inputArea.value = words.slice(0, wordSpans.length).join(' ');  // Restrict further typing until current word is correct
+        // Only check words that the user has typed
+        if (wordIndex < words.length) {
+            const typedWord = words[wordIndex];
+            const wordText = Array.from(charSpans).map(charSpan => charSpan.textContent).join('');
+            
+            if (typedWord === wordText) {
+                // If the word is correct, mark all characters in the word as correct
+                charSpans.forEach(charSpan => {
+                    charSpan.classList.add('correct');
+                    charSpan.classList.remove('incorrect');
+                    this.#correctChars++;
+                });
+            } else {
+                // The word is incorrect, set the quoteComplete flag to false
+                quoteComplete = false;
+
+                // Compare each character of the typed word with the correct word
+                charSpans.forEach((charSpan, charIndex) => {
+                    if (charIndex < typedWord.length) {
+                        const typedChar = typedWord[charIndex];
+                        if (typedChar === charSpan.textContent) {
+                            charSpan.classList.add('correct');
+                            charSpan.classList.remove('incorrect');
+                        } else {
+                            this.#mistakes++;
+                            this.mistakesStat.textContent = this.#mistakes;
+                            charSpan.classList.add('incorrect');
+                            charSpan.classList.remove('correct');
+                        }
+                    } else {
+                        charSpan.classList.remove('correct', 'incorrect');
+                    }
+                });
+
+                // Count extra characters typed beyond the word length as mistakes
+                if (typedWord.length > wordText.length) {
+                    const extraCharsCount = typedWord.length - wordText.length;
+                    this.#mistakes += extraCharsCount;  // Add the number of extra characters as mistakes
+                    this.mistakesStat.textContent = this.#mistakes;
+                }
+                
+            }
+        } else {
+            // Ensure the following words are not marked as anything if not typed yet
+            charSpans.forEach(charSpan => charSpan.classList.remove('correct', 'incorrect'));
+        }
+    });
+    
+    // Only allow typing up to the current word
+    if (words.length > wordSpans.length || words[words.length - 1] !== Array.from(wordSpans[words.length - 1].querySelectorAll('.letter')).map(char => char.textContent).join('')) {
+        this.inputArea.value = words.slice(0, wordSpans.length).join(' ');  // Restrict further typing until the current word is correct
+    }
+
+    // If the entire quote is complete and correct, fetch a new quote and replace the current one
+    if (quoteComplete && this.inputArea.value === this.quote) {
+        this.getAndReplaceQuote();  // Fetch and replace the current quote
+    }
+
+    this.#updateAccuracy();
+}
+
+    
+    async getAndReplaceQuote(){
+        try{
+            const response = await fetch(this.#apiUrl,{
+                headers:{
+                    'X-Api-Key': this.#api
+                }
+            });
+            const data = await response.json();
+            this.quote = data[0].quote;  // Replace the current quote
+            
+            // Replace the HTML content with the new quote
+            this.generatedTextElement.innerHTML = this.#quoteToHTML(this.quote);
+
+            // Clear the input field so the user can start typing the new quote
+            this.inputArea.value = "";
+        }catch(error){
+            console.log(error);
+            this.generatedTextElement.textContent = 'Failed to fetch new quote.';
         }
     }
-    
-    
-    
+
+    #updateAccuracy() {
+        if (this.#totalCharsTyped > 0) {
+            this.#accuracy = ((this.#correctChars - this.#mistakes) / this.#totalCharsTyped) * 100; 
+        } else {
+            this.#accuracy = 0;  // No characters typed yet
+        }
+        
+        
+        const accuracyElement = document.getElementById("finalAccuracy");
+        if (accuracyElement) {
+            accuracyElement.textContent = this.#accuracy.toFixed(2) + "%";  
+        }
+    }
 
     restartTest() {
         clearInterval(this.#countdown);
-        this.#timeLeft = 15;
+        clearInterval(this.#wpmInterval);
+        this.#timeLeft = 120;
         this.countDownElement.textContent = this.#timeLeft;
         this.inputArea.disabled = true;
         this.inputArea.value = "";
@@ -136,6 +230,9 @@ class SpeedTyper {
         this.resultElement.style.display = "none";
         this.generatedTextElement.innerHTML = "";
         this.#mistakes = 0;
+        this.mistakesStat.textContent = this.#mistakes;
+        this.#wpmCounter = 0;
+        this.wpmElement.textContent = this.#wpmCounter;
     }
 }
 
@@ -146,7 +243,8 @@ window.onload = function() {
     const resultElement = document.getElementById("result");
     const generatedTextElement = document.getElementById("generatedText");
     const mistakesStat = document.getElementById("mistakesCounter");
-    const speedTyper = new SpeedTyper(inputArea, countDownElement, resultElement, generatedTextElement,mistakesStat);
+    const wpmElement = document.getElementById("wpmCounter");
+    const speedTyper = new SpeedTyper(inputArea, countDownElement, resultElement, generatedTextElement,mistakesStat,wpmElement);
 
     document.querySelector("button").addEventListener("click", () => speedTyper.restartTest());
 };
