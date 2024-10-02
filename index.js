@@ -1,16 +1,14 @@
 class SpeedTyper {
-    #timeLeft = 120;         
+    #timeLeft = 15;         
     #countDownActive = false; 
     #countdown;
     #apiUrl = 'https://api.api-ninjas.com/v1/quotes';      
-    #api = "";
-    #mistakes = 0;   
+    #api = ""; 
     #startTime = null;
     #wpmCounter = 0;
     #wpmInterval;
     #correctChars = 0;
     #totalCharsTyped = 0;
-    #accuracy = 0;
 
     
     constructor(inputArea, countDownElement, resultElement,generatedTextElement,mistakesStat,wpmElement) {
@@ -81,10 +79,9 @@ class SpeedTyper {
     #displayResult() {
         this.resultElement.style.display = "block";
         const mistakesRes = document.getElementById("finalMistakes");
-        mistakesRes.textContent = this.#mistakes;
         const wpmRes = document.getElementById("finalWPM");
         wpmRes.textContent = this.#wpmCounter;
-        this.#updateAccuracy();
+
     }
 
     async getQuote() {
@@ -146,8 +143,6 @@ class SpeedTyper {
                             charSpan.classList.add('correct');
                             charSpan.classList.remove('incorrect');
                         } else {
-                            this.#mistakes++;
-                            this.mistakesStat.textContent = this.#mistakes;
                             charSpan.classList.add('incorrect');
                             charSpan.classList.remove('correct');
                         }
@@ -159,8 +154,6 @@ class SpeedTyper {
                 // Count extra characters typed beyond the word length as mistakes
                 if (typedWord.length > wordText.length) {
                     const extraCharsCount = typedWord.length - wordText.length;
-                    this.#mistakes += extraCharsCount;  // Add the number of extra characters as mistakes
-                    this.mistakesStat.textContent = this.#mistakes;
                 }
                 
             }
@@ -179,8 +172,6 @@ class SpeedTyper {
     if (quoteComplete && this.inputArea.value === this.quote) {
         this.getAndReplaceQuote();  // Fetch and replace the current quote
     }
-
-    this.#updateAccuracy();
 }
 
     
@@ -205,32 +196,18 @@ class SpeedTyper {
         }
     }
 
-    #updateAccuracy() {
-        if (this.#totalCharsTyped > 0) {
-            this.#accuracy = ((this.#correctChars - this.#mistakes) / this.#totalCharsTyped) * 100; 
-        } else {
-            this.#accuracy = 0;  // No characters typed yet
-        }
-        
-        
-        const accuracyElement = document.getElementById("finalAccuracy");
-        if (accuracyElement) {
-            accuracyElement.textContent = this.#accuracy.toFixed(2) + "%";  
-        }
-    }
+
 
     restartTest() {
         clearInterval(this.#countdown);
         clearInterval(this.#wpmInterval);
-        this.#timeLeft = 120;
+        this.#timeLeft = 15;
         this.countDownElement.textContent = this.#timeLeft;
         this.inputArea.disabled = true;
         this.inputArea.value = "";
         this.#countDownActive = false;
         this.resultElement.style.display = "none";
         this.generatedTextElement.innerHTML = "";
-        this.#mistakes = 0;
-        this.mistakesStat.textContent = this.#mistakes;
         this.#wpmCounter = 0;
         this.wpmElement.textContent = this.#wpmCounter;
     }
