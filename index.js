@@ -1,5 +1,5 @@
 class SpeedTyper {
-    #timeLeft = 15;         
+    #timeLeft = 60;         
     #countDownActive = false; 
     #countdown;
     #apiUrl = 'https://api.api-ninjas.com/v1/quotes';      
@@ -9,6 +9,7 @@ class SpeedTyper {
     #wpmInterval;
     #correctChars = 0;
     #totalCharsTyped = 0;
+    #wordsTyped = 0;
 
     
     constructor(inputArea, countDownElement, resultElement,generatedTextElement,mistakesStat,wpmElement) {
@@ -39,13 +40,12 @@ class SpeedTyper {
     #updateWPM(){
         const now = new Date();
         const elapsedTime = (now - this.#startTime)/1000;
-
-        const typedWords = this.inputArea.value.trim().split(/\s+/).filter(word => word.length > 0).length;
-        const wpm = Math.floor((typedWords / elapsedTime) * 60);
-
+    
+        // Use cumulative words typed for WPM calculation
+        const wpm = Math.floor((this.#wordsTyped / elapsedTime) * 60);
+    
         if(elapsedTime > 0) this.wpmElement.textContent = wpm;
         this.#wpmCounter = wpm;
-
     }
 
     #handleKeydown(e) {
@@ -131,6 +131,11 @@ class SpeedTyper {
                     charSpan.classList.remove('incorrect');
                     this.#correctChars++;
                 });
+                  // Increment total words typed if not already counted
+                  if (!wordSpan.dataset.counted) {
+                    this.#wordsTyped++;
+                    wordSpan.dataset.counted = "true"; // Mark as counted
+                }
             } else {
                 // The word is incorrect, set the quoteComplete flag to false
                 quoteComplete = false;
@@ -201,7 +206,7 @@ class SpeedTyper {
     restartTest() {
         clearInterval(this.#countdown);
         clearInterval(this.#wpmInterval);
-        this.#timeLeft = 15;
+        this.#timeLeft = 60;
         this.countDownElement.textContent = this.#timeLeft;
         this.inputArea.disabled = true;
         this.inputArea.value = "";
@@ -210,6 +215,7 @@ class SpeedTyper {
         this.generatedTextElement.innerHTML = "";
         this.#wpmCounter = 0;
         this.wpmElement.textContent = this.#wpmCounter;
+        this.#wordsTyped = 0;
     }
 }
 
